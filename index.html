@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معمل الأسنان - متابعة الشغل</title>
+<style>
+    body { font-family: Arial, sans-serif; background: #e6f2ff; margin:0; padding:0; }
+    header { background: #8ccfff; padding: 20px; text-align: center; color: white; font-size: 24px; }
+    .container { padding: 20px; max-width: 1000px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ccc; }
+    th { background-color: #b3e0ff; }
+    button { padding: 5px 10px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+    .pending { background-color: #ffcccb; }
+    .tryin { background-color: #fff7a8; }
+    .final { background-color: #b3ffb3; }
+    .filter-btn { background-color: #8ccfff; color: white; }
+    form { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+    input, select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; flex: 1; min-width: 150px; }
+    @media(max-width:600px){ form { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<header>معمل الأسنان - متابعة الشغل</header>
+
+<div class="container">
+
+    <h2>فلتر حسب حالة الشغل:</h2>
+    <button class="filter-btn" onclick="filterStatus('all')">الكل</button>
+    <button class="filter-btn" onclick="filterStatus('pending')">Pending</button>
+    <button class="filter-btn" onclick="filterStatus('tryin')">Try-in</button>
+    <button class="filter-btn" onclick="filterStatus('final')">Final</button>
+
+    <table id="appointmentsTable">
+        <thead>
+            <tr>
+                <th>الدكتور</th>
+                <th>المريض</th>
+                <th>الموعد</th>
+                <th>الحالة</th>
+                <th>تغيير الحالة</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- المواعيد هتتحط هنا ديناميكي -->
+        </tbody>
+    </table>
+
+    <h2>إضافة موعد جديد:</h2>
+    <form id="appointmentForm">
+        <input type="text" id="doctor" placeholder="اسم الدكتور" required>
+        <input type="text" id="patient" placeholder="اسم المريض" required>
+        <input type="date" id="date" required>
+        <select id="status">
+            <option value="pending">Pending</option>
+            <option value="tryin">Try-in</option>
+            <option value="final">Final</option>
+        </select>
+        <button type="submit" style="background-color:#8ccfff; color:white;">إضافة</button>
+    </form>
+
+</div>
+
+<script>
+const tableBody = document.querySelector('#appointmentsTable tbody');
+const form = document.getElementById('appointmentForm');
+
+let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+
+// وظيفة لتحديث الجدول
+function renderTable() {
+    tableBody.innerHTML = '';
+    appointments.forEach((a, index) => {
+        const row = document.createElement('tr');
+        row.className = a.status;
+        row.innerHTML = `
+            <td>${a.doctor}</td>
+            <td>${a.patient}</td>
+            <td>${a.date}</td>
+            <td>${a.status}</td>
+            <td>
+                <button onclick="changeStatus(${index})">تغيير الحالة</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// تغيير الحالة
+function changeStatus(index){
+    const current = appointments[index].status;
+    if(current === 'pending') appointments[index].status = 'tryin';
+    else if(current === 'tryin') appointments[index].status = 'final';
+    else appointments[index].status = 'pending';
+    saveAndRender();
+}
+
+// فلترة حسب الحالة
+function filterStatus(status) {
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach((row, i) => {
+        if(status === 'all') row.style.display = '';
+        else row.style.display = row.classList.contains(status) ? '' : 'none';
+    });
+}
+
+// حفظ في LocalStorage و تحديث الجدول
+function saveAndRender() {
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+    renderTable();
+}
+
+// إضافة موعد جديد
+form.addEventListener('submit', e => {
+    e.preventDefault();
+    const newAppointment = {
+        doctor: document.getElementById('doctor').value,
+        patient: document.getElementById('patient').value,
+        date: document.getElementById('date').value,
+        status: document.getElementById('status').value
+    };
+    appointments.push(newAppointment);
+    form.reset();
+    saveAndRender();
+});
+
+// Initial render
+renderTable();
+</script>
+
+</body>
+</html>
